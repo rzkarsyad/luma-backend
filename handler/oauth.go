@@ -61,10 +61,18 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Picture: userinfo.Picture,
 	}
 
-	err = h.MongoRepo.InsertUser(user)
+	existingUser, err := h.MongoRepo.FindUserByEmail(user.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert user: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find user: " + err.Error()})
 		return
+	}
+
+	if existingUser == nil {
+		err = h.MongoRepo.InsertUser(user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert user: " + err.Error()})
+			return
+		}
 	}
 
 	jwtToken, err := generateJWT(user)
