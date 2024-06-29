@@ -4,10 +4,12 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"luma-backend/model"
 	"luma-backend/repository"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -65,9 +67,30 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	jwtToken, err := generateJWT(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT: " + err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"email":           userinfo.Email,
-		"name":            userinfo.Name,
-		"profile_picture": userinfo.Picture,
+		"token": jwtToken,
 	})
+}
+
+func generateJWT(user model.User) (string, error) {
+	secretKey := os.Getenv("JWT_SECRET")
+	claims := jwt.MapClaims{
+		"email":   user.Email,
+		"name":    user.Name,
+		"picture": user.Picture,
+		"exp":     time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secretKey))
+}
+
+func (h *OAuthHandler) Logout(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"luma-backend/handler"
+	"luma-backend/middleware"
 	"luma-backend/repository"
 	"luma-backend/service"
 )
@@ -53,9 +54,18 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/auth/google/login", oauthHandler.GoogleLogin)
-	router.GET("/auth/google/callback", oauthHandler.GoogleCallback)
-	router.POST("/api/ask", aiHandler.HandleRequest)
+	auth := router.Group("/auth")
+	{
+		auth.GET("/google/login", oauthHandler.GoogleLogin)
+		auth.GET("/google/callback", oauthHandler.GoogleCallback)
+		auth.GET("/logout", oauthHandler.Logout)
+	}
+
+	api := router.Group("/api")
+	{
+		api.Use(middleware.AuthMiddleware())
+		api.POST("/ask", aiHandler.HandleRequest)
+	}
 
 	router.Run(":8080")
 }
