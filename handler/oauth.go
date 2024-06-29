@@ -54,8 +54,9 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	}
 
 	user := model.User{
-		Email: userinfo.Email,
-		Name:  userinfo.Name,
+		Email:   userinfo.Email,
+		Name:    userinfo.Name,
+		Picture: userinfo.Picture,
 	}
 
 	err = h.MongoRepo.InsertUser(user)
