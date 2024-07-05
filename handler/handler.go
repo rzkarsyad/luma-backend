@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"os"
-	"strings"
 
 	"luma-backend/model"
 	"luma-backend/service"
@@ -26,37 +25,26 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	normalizedQuery := strings.ToLower(strings.TrimSpace(input.Query))
-	if normalizedQuery == "halo" || normalizedQuery == "hi" {
-		response := model.APIResponse{
-			Candidates: []model.Candidate{
-				{
-					Content: model.Content{
-						Role: "assistant",
-						Parts: []model.Part{
-							{Text: "Halo! Saya Luma, AI Assistant yang bisa membantu kamu seputar penggunaan energi di Smarthome kamu. Data yang Anda berikan adalah tentang penggunaan peralatan rumah tangga di berbagai waktu dan kondisi. Apakah Anda ingin saya melakukan analisis atau memberikan informasi lebih lanjut tentang data ini?"},
-						},
-					},
-				},
-			},
-		}
-		c.JSON(http.StatusOK, response)
-		return
+	// Simpan pesan pengguna ke riwayat percakapan
+	userMessage := model.Message{
+		Role: "user",
+		Parts: []model.Part{
+			{Text: input.Query},
+		},
 	}
-
-	// Fetch chat history
-	chatHistory, err := h.Service.GetChatHistory(input.SessionID)
+	err := h.Service.SaveChatHistory(input.SessionID, userMessage)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching chat history"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
 		return
 	}
 
+	// Buat payload untuk model
 	inputs := model.Inputs{
-		Table:       h.Table,
-		Query:       input.Query,
-		ChatHistory: chatHistory,
+		Table: h.Table,
+		Query: input.Query,
 	}
 
+	// Ambil response dari model TAPAS
 	token := os.Getenv("HUGGINGFACE_TOKEN")
 	if token == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "HUGGINGFACE_TOKEN environment variable not set"})
@@ -69,11 +57,20 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	// if len(response.Cells) == 0 {
-	// 	c.JSON(http.StatusOK, gin.H{"message": "The data you provided doesn't include any information related to your request."})
-	// 	return
-	// }
+	// Simpan response dari model TAPAS ke riwayat percakapan
+	assistantMessage := model.Message{
+		Role: "assistant",
+		Parts: []model.Part{
+			{Text: response.Answer},
+		},
+	}
+	err = h.Service.SaveChatHistory(input.SessionID, assistantMessage)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
+		return
+	}
 
+	// Ambil rekomendasi dari model Gemini
 	apiKey := os.Getenv("API_KEY_GEMINI")
 	if apiKey == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "API_KEY_GEMINI environment variable not set"})
@@ -90,23 +87,17 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		geminiResponse.Candidates[i].Content.Role = "assistant"
 	}
 
-	// Save chat message to history
-	err = h.Service.SaveChatMessage(input.SessionID, model.Message{
-		Role:  "user",
-		Parts: []model.Part{{Text: input.Query}},
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat message"})
-		return
-	}
-
-	err = h.Service.SaveChatMessage(input.SessionID, model.Message{
-		Role:  "assistant",
-		Parts: []model.Part{{Text: response.Cells[0]}},
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat message"})
-		return
+	// Simpan rekomendasi dari model Gemini ke riwayat percakapan
+	for _, candidate := range geminiResponse.Candidates {
+		assistantMessage := model.Message{
+			Role:  "assistant",
+			Parts: candidate.Content.Parts,
+		}
+		err = h.Service.SaveChatHistory(input.SessionID, assistantMessage)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

@@ -47,13 +47,10 @@ func main() {
 		return
 	}
 
-	chatRepo := &repository.MongoRepository{Client: mongoRepo.Client, DB: mongoRepo.DB}
+	chatRepo := repository.NewChatRepository(mongoRepo.Client, os.Getenv("MONGO_DB"))
 
 	aiModelConnector := &repository.AIModelConnector{Client: &http.Client{}}
-	aiService := &service.AIService{
-		Connector: aiModelConnector,
-		ChatRepo:  chatRepo,
-	}
+	aiService := &service.AIService{Connector: aiModelConnector, ChatRepo: chatRepo}
 	aiHandler := &handler.AIHandler{Service: aiService, Table: table}
 	oauthHandler := &handler.OAuthHandler{MongoRepo: mongoRepo}
 
