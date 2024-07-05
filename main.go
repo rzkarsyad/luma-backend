@@ -56,7 +56,7 @@ func main() {
 
 	auth := router.Group("/auth")
 	{
-		auth.GET("/google/login", oauthHandler.GoogleLogin)
+		auth.GET("/google/login", middleware.CheckLoginMiddleware(), oauthHandler.GoogleLogin)
 		auth.GET("/google/callback", oauthHandler.GoogleCallback)
 		auth.GET("/logout", oauthHandler.Logout)
 	}
@@ -64,7 +64,7 @@ func main() {
 	api := router.Group("/api")
 	{
 		api.Use(middleware.AuthMiddleware())
-		api.POST("/ask", aiHandler.HandleRequest)
+		api.POST("/chat", aiHandler.HandleRequest)
 	}
 
 	router.Run(":8080")

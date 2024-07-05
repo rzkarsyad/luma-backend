@@ -33,7 +33,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 					Content: model.Content{
 						Role: "assistant",
 						Parts: []model.Part{
-							{Text: "Halo! Saya Luma, AI Assistant yang bisa membantu kamu seputar Energi di Smarthome kamu. Data yang Anda berikan adalah tentang penggunaan peralatan rumah tangga di berbagai waktu dan kondisi. Apakah Anda ingin saya melakukan analisis atau memberikan informasi lebih lanjut tentang data ini?"},
+							{Text: "Halo! Saya Luma, AI Assistant yang bisa membantu kamu seputar penggunaan energi di Smarthome kamu. Data yang Anda berikan adalah tentang penggunaan peralatan rumah tangga di berbagai waktu dan kondisi. Apakah Anda ingin saya melakukan analisis atau memberikan informasi lebih lanjut tentang data ini?"},
 						},
 					},
 				},

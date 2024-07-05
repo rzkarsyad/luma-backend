@@ -18,7 +18,7 @@ import (
 )
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  "http://localhost:8080/auth/google/callback",
+	RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
@@ -36,6 +36,7 @@ func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 
 func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	code := c.Query("code")
+
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange token: " + err.Error()})
@@ -81,6 +82,8 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("jwt_token", jwtToken, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
+
 	c.JSON(http.StatusOK, gin.H{
 		"token": jwtToken,
 	})
@@ -100,5 +103,6 @@ func generateJWT(user model.User) (string, error) {
 }
 
 func (h *OAuthHandler) Logout(c *gin.Context) {
+	c.SetCookie("jwt_token", "", -1, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
