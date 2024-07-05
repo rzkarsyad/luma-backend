@@ -14,7 +14,8 @@ type Message struct {
 }
 
 type ChatHistory struct {
-	Messages []Message `json:"messages"`
+	SessionID string    `json:"session_id"`
+	Messages  []Message `json:"messages"`
 }
 
 type Content struct {
@@ -33,8 +34,9 @@ type APIResponse struct {
 }
 
 type Inputs struct {
-	Table map[string][]string `json:"table"`
-	Query string              `json:"query"`
+	Table       map[string][]string `json:"table"`
+	Query       string              `json:"query"`
+	ChatHistory []Message           `json:"chat_history"`
 }
 
 type Response struct {

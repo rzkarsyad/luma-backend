@@ -18,7 +18,8 @@ type AIHandler struct {
 
 func (h *AIHandler) HandleRequest(c *gin.Context) {
 	var input struct {
-		Query string `json:"query"`
+		Query     string `json:"query"`
+		SessionID string `json:"session_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -43,9 +44,17 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
+	// Fetch chat history
+	chatHistory, err := h.Service.GetChatHistory(input.SessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching chat history"})
+		return
+	}
+
 	inputs := model.Inputs{
-		Table: h.Table,
-		Query: input.Query,
+		Table:       h.Table,
+		Query:       input.Query,
+		ChatHistory: chatHistory,
 	}
 
 	token := os.Getenv("HUGGINGFACE_TOKEN")
@@ -60,10 +69,10 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	if len(response.Cells) == 0 {
-		c.JSON(http.StatusOK, gin.H{"message": "The data you provided doesn't include any information related to your request."})
-		return
-	}
+	// if len(response.Cells) == 0 {
+	// 	c.JSON(http.StatusOK, gin.H{"message": "The data you provided doesn't include any information related to your request."})
+	// 	return
+	// }
 
 	apiKey := os.Getenv("API_KEY_GEMINI")
 	if apiKey == "" {
@@ -79,6 +88,25 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 
 	for i := range geminiResponse.Candidates {
 		geminiResponse.Candidates[i].Content.Role = "assistant"
+	}
+
+	// Save chat message to history
+	err = h.Service.SaveChatMessage(input.SessionID, model.Message{
+		Role:  "user",
+		Parts: []model.Part{{Text: input.Query}},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat message"})
+		return
+	}
+
+	err = h.Service.SaveChatMessage(input.SessionID, model.Message{
+		Role:  "assistant",
+		Parts: []model.Part{{Text: response.Cells[0]}},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat message"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

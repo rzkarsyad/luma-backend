@@ -57,3 +57,29 @@ func (r *MongoRepository) FindUserByEmail(email string) (*model.User, error) {
 	}
 	return &user, nil
 }
+
+// Chat repository methods
+func (r *MongoRepository) GetChatHistory(sessionID string) ([]model.Message, error) {
+	var chatHistory model.ChatHistory
+	filter := bson.D{{Key: "session_id", Value: sessionID}}
+	collection := r.DB.Collection("chat_history")
+	err := collection.FindOne(context.Background(), filter).Decode(&chatHistory)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return chatHistory.Messages, nil
+}
+
+func (r *MongoRepository) SaveChatMessage(sessionID string, message model.Message) error {
+	collection := r.DB.Collection("chat_history")
+	_, err := collection.UpdateOne(
+		context.Background(),
+		bson.M{"session_id": sessionID},
+		bson.M{"$push": bson.M{"messages": message}},
+		options.Update().SetUpsert(true),
+	)
+	return err
+}

@@ -7,6 +7,7 @@ import (
 
 type AIService struct {
 	Connector *repository.AIModelConnector
+	ChatRepo  *repository.MongoRepository
 }
 
 func (s *AIService) GetAIResponse(inputs model.Inputs, token string) (model.Response, error) {
@@ -15,4 +16,12 @@ func (s *AIService) GetAIResponse(inputs model.Inputs, token string) (model.Resp
 
 func (s *AIService) GetGeminiRecommendation(query string, table map[string][]string, token string) (model.APIResponse, error) {
 	return s.Connector.GeminiRecommendation(query, table, token)
+}
+
+func (s *AIService) GetChatHistory(sessionID string) ([]model.Message, error) {
+	return s.ChatRepo.GetChatHistory(sessionID)
+}
+
+func (s *AIService) SaveChatMessage(sessionID string, message model.Message) error {
+	return s.ChatRepo.SaveChatMessage(sessionID, message)
 }
