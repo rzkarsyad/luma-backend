@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	googleoauth "google.golang.org/api/oauth2/v2"
@@ -76,6 +77,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		}
 	}
 
+	// Generate a new session ID
+	sessionID := uuid.New().String()
+
+	// Save the session ID with user information
+	err = h.MongoRepo.SaveSession(sessionID, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session: " + err.Error()})
+		return
+	}
+
 	jwtToken, err := generateJWT(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT: " + err.Error()})
@@ -83,9 +94,11 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	}
 
 	c.SetCookie("jwt_token", jwtToken, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
+	c.SetCookie("session_id", sessionID, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": jwtToken,
+		"token":      jwtToken,
+		"session_id": sessionID,
 	})
 }
 
@@ -104,5 +117,6 @@ func generateJWT(user model.User) (string, error) {
 
 func (h *OAuthHandler) Logout(c *gin.Context) {
 	c.SetCookie("jwt_token", "", -1, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
+	c.SetCookie("session_id", "", -1, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

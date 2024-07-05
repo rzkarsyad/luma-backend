@@ -57,3 +57,18 @@ func (r *MongoRepository) FindUserByEmail(email string) (*model.User, error) {
 	}
 	return &user, nil
 }
+
+func (r *MongoRepository) SaveSession(sessionID string, user model.User) error {
+	collection := r.DB.Collection("sessions")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	sessionData := bson.M{
+		"session_id": sessionID,
+		"user":       user,
+		"created_at": time.Now(),
+	}
+
+	_, err := collection.InsertOne(ctx, sessionData)
+	return err
+}

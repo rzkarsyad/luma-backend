@@ -38,9 +38,9 @@ func CsvToSlice(data string) (map[string][]string, error) {
 	return table, nil
 }
 
-func (c *AIModelConnector) ConnectAIModel(payload interface{}, token string) (model.Response, error) {
+func (c *AIModelConnector) ConnectAIModel(inputs model.Inputs, token string) (model.Response, error) {
 	url := "https://api-inference.huggingface.co/models/google/tapas-base-finetuned-wtq"
-	jsonPayload, err := json.Marshal(payload)
+	jsonPayload, err := json.Marshal(inputs)
 	if err != nil {
 		return model.Response{}, err
 	}
@@ -73,10 +73,14 @@ func (c *AIModelConnector) ConnectAIModel(payload interface{}, token string) (mo
 	return response, nil
 }
 
-func (c *AIModelConnector) GeminiRecommendation(query string, table map[string][]string, token string) (model.APIResponse, error) {
+func (c *AIModelConnector) GeminiRecommendationWithHistory(query string, table map[string][]string, token string, chatHistory []model.Message) (model.APIResponse, error) {
 	prompt := query + "\n"
 	for column, values := range table {
 		prompt += column + ": " + strings.Join(values, ", ") + "\n"
+	}
+
+	for _, message := range chatHistory {
+		prompt += message.Role + ": " + message.Parts[0].Text + "\n"
 	}
 
 	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + token

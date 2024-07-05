@@ -17,11 +17,16 @@ type AIHandler struct {
 
 func (h *AIHandler) HandleRequest(c *gin.Context) {
 	var input struct {
-		Query     string `json:"query"`
-		SessionID string `json:"session_id"`
+		Query string `json:"query"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sessionID, err := c.Cookie("session_id")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session ID not found"})
 		return
 	}
 
@@ -32,7 +37,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 			{Text: input.Query},
 		},
 	}
-	err := h.Service.SaveChatHistory(input.SessionID, userMessage)
+	err = h.Service.SaveChatHistory(sessionID, userMessage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
 		return
@@ -64,7 +69,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 			{Text: response.Answer},
 		},
 	}
-	err = h.Service.SaveChatHistory(input.SessionID, assistantMessage)
+	err = h.Service.SaveChatHistory(sessionID, assistantMessage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
 		return
@@ -77,7 +82,8 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	geminiResponse, err := h.Service.GetGeminiRecommendation(input.Query, h.Table, apiKey)
+	// geminiResponse, err := h.Service.GetGeminiRecommendation(input.Query, h.Table, apiKey)
+	geminiResponse, err := h.Service.GetGeminiRecommendation(sessionID, input.Query, h.Table, apiKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting Gemini recommendation"})
 		return
@@ -93,15 +99,21 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 			Role:  "assistant",
 			Parts: candidate.Content.Parts,
 		}
-		err = h.Service.SaveChatHistory(input.SessionID, assistantMessage)
+		err := h.Service.SaveChatHistory(sessionID, assistantMessage)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"tapas_response":         response,
-		"gemini_recommendations": geminiResponse.Candidates,
-	})
+	// Gabungkan jawaban dari model TAPAS dan rekomendasi dari model Gemini
+	fullResponse := struct {
+		Answer          string            `json:"answer"`
+		Recommendations []model.Candidate `json:"recommendations"`
+	}{
+		Answer:          response.Answer,
+		Recommendations: geminiResponse.Candidates,
+	}
+
+	c.JSON(http.StatusOK, fullResponse)
 }

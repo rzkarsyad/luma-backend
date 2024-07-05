@@ -14,8 +14,12 @@ func (s *AIService) GetAIResponse(inputs model.Inputs, token string) (model.Resp
 	return s.Connector.ConnectAIModel(inputs, token)
 }
 
-func (s *AIService) GetGeminiRecommendation(query string, table map[string][]string, token string) (model.APIResponse, error) {
-	return s.Connector.GeminiRecommendation(query, table, token)
+func (s *AIService) GetGeminiRecommendation(sessionID, query string, table map[string][]string, token string) (model.APIResponse, error) {
+	chatHistory, err := s.GetChatHistory(sessionID)
+	if err != nil {
+		return model.APIResponse{}, err
+	}
+	return s.Connector.GeminiRecommendationWithHistory(query, table, token, chatHistory)
 }
 
 func (s *AIService) SaveChatHistory(sessionID string, message model.Message) error {
