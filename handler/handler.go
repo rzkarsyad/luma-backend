@@ -54,9 +54,14 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	_, err := h.Service.GetAIResponse(inputs, token)
+	response, err := h.Service.GetAIResponse(inputs, token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error connecting to AI model"})
+		return
+	}
+
+	if len(response.Cells) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "The data you provided doesn't include any information related to your request."})
 		return
 	}
 
@@ -77,6 +82,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"tapas_response":         response,
 		"gemini_recommendations": geminiResponse.Candidates,
 	})
 }
