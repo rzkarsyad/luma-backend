@@ -54,7 +54,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	response, err := h.Service.GetAIResponse(inputs, token)
+	_, err := h.Service.GetAIResponse(inputs, token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error connecting to AI model"})
 		return
@@ -72,8 +72,11 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
+	for i := range geminiResponse.Candidates {
+		geminiResponse.Candidates[i].Content.Role = "assistant"
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"tapas_answer":           response.Answer,
 		"gemini_recommendations": geminiResponse.Candidates,
 	})
 }
