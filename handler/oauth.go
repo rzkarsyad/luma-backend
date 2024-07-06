@@ -95,7 +95,6 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	c.SetCookie("session_id", sessionID, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 
 	c.Redirect(http.StatusFound, "http://localhost:3000/chat")
-	return
 }
 
 func generateJWT(user model.User) (string, error) {
