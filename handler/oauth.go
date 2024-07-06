@@ -94,10 +94,8 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	c.SetCookie("jwt_token", jwtToken, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 	c.SetCookie("session_id", sessionID, 3600*72, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 
-	c.JSON(http.StatusOK, gin.H{
-		"token":      jwtToken,
-		"session_id": sessionID,
-	})
+	c.Redirect(http.StatusFound, "http://localhost:3000/chat")
+	return
 }
 
 func generateJWT(user model.User) (string, error) {
@@ -117,4 +115,5 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 	c.SetCookie("jwt_token", "", -1, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 	c.SetCookie("session_id", "", -1, "/", os.Getenv("COOKIE_DOMAIN"), false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+	c.Redirect(http.StatusFound, "http://localhost:3000/")
 }
