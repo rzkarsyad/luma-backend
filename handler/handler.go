@@ -30,7 +30,6 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	// Simpan pesan pengguna ke riwayat percakapan
 	userMessage := model.Message{
 		Role: "user",
 		Parts: []model.Part{
@@ -43,13 +42,11 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	// Buat payload untuk model
 	inputs := model.Inputs{
 		Table: h.Table,
 		Query: input.Query,
 	}
 
-	// Ambil response dari model TAPAS
 	token := os.Getenv("HUGGINGFACE_TOKEN")
 	if token == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "HUGGINGFACE_TOKEN environment variable not set"})
@@ -62,7 +59,6 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	// Simpan response dari model TAPAS ke riwayat percakapan
 	assistantMessage := model.Message{
 		Role: "assistant",
 		Parts: []model.Part{
@@ -75,14 +71,12 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	// Ambil rekomendasi dari model Gemini
 	apiKey := os.Getenv("API_KEY_GEMINI")
 	if apiKey == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "API_KEY_GEMINI environment variable not set"})
 		return
 	}
 
-	// geminiResponse, err := h.Service.GetGeminiRecommendation(input.Query, h.Table, apiKey)
 	geminiResponse, err := h.Service.GetGeminiRecommendation(sessionID, input.Query, h.Table, apiKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting Gemini recommendation"})
@@ -93,7 +87,6 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		geminiResponse.Candidates[i].Content.Role = "assistant"
 	}
 
-	// Simpan rekomendasi dari model Gemini ke riwayat percakapan
 	for _, candidate := range geminiResponse.Candidates {
 		assistantMessage := model.Message{
 			Role:  "assistant",
@@ -106,7 +99,6 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		}
 	}
 
-	// Gabungkan jawaban dari model TAPAS dan rekomendasi dari model Gemini
 	fullResponse := struct {
 		Answer          string            `json:"answer"`
 		Recommendations []model.Candidate `json:"recommendations"`

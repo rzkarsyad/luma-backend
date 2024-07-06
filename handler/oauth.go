@@ -77,10 +77,8 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		}
 	}
 
-	// Generate a new session ID
 	sessionID := uuid.New().String()
 
-	// Save the session ID with user information
 	err = h.MongoRepo.SaveSession(sessionID, user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session: " + err.Error()})
