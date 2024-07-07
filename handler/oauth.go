@@ -93,7 +93,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Login successful",
-		"jwt_token":  jwtToken,
+		"token":      jwtToken,
 		"session_id": sessionID,
 	})
 }
