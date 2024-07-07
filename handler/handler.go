@@ -18,7 +18,8 @@ type AIHandler struct {
 
 func (h *AIHandler) HandleRequest(c *gin.Context) {
 	var input struct {
-		Query string `json:"query"`
+		Query     string `json:"query"`
+		SessionID string `json:"session_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -31,9 +32,18 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	sessionID := strings.TrimPrefix(authHeader, "Bearer ")
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token not found in Authorization header"})
+		return
+	}
+
+	sessionID := c.GetHeader("session_id")
 	if sessionID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session ID not found in Authorization header"})
+		sessionID = input.SessionID
+	}
+	if sessionID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session ID not found in headers or body"})
 		return
 	}
 
@@ -54,13 +64,13 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		Query: input.Query,
 	}
 
-	token := os.Getenv("HUGGINGFACE_TOKEN")
-	if token == "" {
+	huggingfaceToken := os.Getenv("HUGGINGFACE_TOKEN")
+	if huggingfaceToken == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "HUGGINGFACE_TOKEN environment variable not set"})
 		return
 	}
 
-	response, err := h.Service.GetAIResponse(inputs, token)
+	response, err := h.Service.GetAIResponse(inputs, huggingfaceToken)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error connecting to AI model"})
 		return
