@@ -92,7 +92,6 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	// Simpan token dan ID session di cookie
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt_token",
 		Value:    jwtToken,
@@ -103,7 +102,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
-	// Arahkan pengguna ke halaman chat dengan menyertakan token dan session ID di URL
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(72 * time.Hour),
+	})
+
 	redirectURL := os.Getenv("FRONTEND_CHAT") + "?jwt_token=" + jwtToken + "&session_id=" + sessionID
 	c.Redirect(http.StatusFound, redirectURL)
 }
