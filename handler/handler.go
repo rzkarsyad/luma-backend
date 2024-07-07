@@ -126,3 +126,19 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 
 	c.JSON(http.StatusOK, fullResponse)
 }
+
+func (h *AIHandler) GetChatHistory(c *gin.Context) {
+	sessionID := c.Query("session_id")
+	if sessionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Session ID not provided"})
+		return
+	}
+
+	messages, err := h.Service.GetChatHistory(sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving chat history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"messages": messages})
+}
