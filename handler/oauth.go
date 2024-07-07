@@ -121,6 +121,34 @@ func generateJWT(user model.User) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
+func (h *OAuthHandler) UserInfo(c *gin.Context) {
+	tokenString, err := c.Cookie("jwt_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	claims := &jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	email := (*claims)["email"].(string)
+	name := (*claims)["name"].(string)
+	picture := (*claims)["picture"].(string)
+
+	c.JSON(http.StatusOK, gin.H{
+		"email":   email,
+		"name":    name,
+		"picture": picture,
+	})
+}
+
 func (h *OAuthHandler) Logout(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt_token",

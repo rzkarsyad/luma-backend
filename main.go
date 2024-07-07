@@ -63,6 +63,7 @@ func main() {
 		auth.GET("/google/login", middleware.CheckLoginMiddleware(), oauthHandler.GoogleLogin)
 		auth.GET("/google/callback", oauthHandler.GoogleCallback)
 		auth.GET("/logout", oauthHandler.Logout)
+		auth.GET("/userinfo", oauthHandler.UserInfo)
 	}
 
 	api := router.Group("/api")
