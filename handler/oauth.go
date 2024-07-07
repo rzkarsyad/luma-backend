@@ -32,12 +32,13 @@ type OAuthHandler struct {
 
 func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 	url := googleOauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	c.Redirect(http.StatusTemporaryRedirect, url)
+	c.Redirect(http.StatusFound, url)
 }
 
 func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	code := c.Query("code")
 
+	// Tukar kode untuk mendapatkan token
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange token: " + err.Error()})
@@ -91,6 +92,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	// Simpan token dan ID session di cookie
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt_token",
 		Value:    jwtToken,
@@ -101,11 +103,9 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":    "Login successful",
-		"token":      jwtToken,
-		"session_id": sessionID,
-	})
+	// Arahkan pengguna ke halaman chat dengan menyertakan token dan session ID di URL
+	redirectURL := os.Getenv("FRONTEND_CHAT") + "?jwt_token=" + jwtToken + "&session_id=" + sessionID
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 func generateJWT(user model.User) (string, error) {
@@ -161,4 +161,5 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+	c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
 }

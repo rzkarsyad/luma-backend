@@ -14,6 +14,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "You are currently not logged in. Please log in to access this feature."})
+			c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
 			c.Abort()
 			return
 		}
@@ -21,6 +22,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+			c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
 			c.Abort()
 			return
 		}
@@ -34,6 +36,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
 			c.Abort()
 			return
 		}
@@ -44,6 +47,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Set("picture", claims["picture"])
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
 			c.Abort()
 			return
 		}
@@ -68,6 +72,7 @@ func CheckLoginMiddleware() gin.HandlerFunc {
 				if err == nil {
 					if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 						c.JSON(http.StatusOK, gin.H{"message": "User is logged in", "status": "success"})
+						c.Redirect(http.StatusFound, os.Getenv("FRONTEND_CHAT"))
 						c.Abort()
 						return
 					}
