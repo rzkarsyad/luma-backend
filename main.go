@@ -56,6 +56,8 @@ func main() {
 
 	router := gin.Default()
 
+	router.Use(middleware.CORSMiddleware())
+
 	auth := router.Group("/auth")
 	{
 		auth.GET("/google/login", middleware.CheckLoginMiddleware(), oauthHandler.GoogleLogin)

@@ -60,7 +60,7 @@ func CheckLoginMiddleware() gin.HandlerFunc {
 			})
 			if err == nil {
 				if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-					c.Redirect(http.StatusTemporaryRedirect, "/auth/google/callback")
+					c.Redirect(http.StatusTemporaryRedirect, "http://localhost:3000/chat")
 					c.Abort()
 					return
 				}
