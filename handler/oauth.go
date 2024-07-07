@@ -167,6 +167,15 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(-1 * time.Hour),
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 	c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URL"))
