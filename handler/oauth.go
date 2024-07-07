@@ -38,7 +38,6 @@ func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	code := c.Query("code")
 
-	// Tukar kode untuk mendapatkan token
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange token: " + err.Error()})
@@ -112,8 +111,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
-	redirectURL := os.Getenv("FRONTEND_CHAT") + "?jwt_token=" + jwtToken + "&session_id=" + sessionID
-	c.Redirect(http.StatusFound, redirectURL)
+	c.Redirect(http.StatusFound, os.Getenv("FRONTEND_CHAT"))
 }
 
 func generateJWT(user model.User) (string, error) {
