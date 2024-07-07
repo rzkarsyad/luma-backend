@@ -22,6 +22,7 @@ func (s *AIService) GetGeminiRecommendation(sessionID, query string, table map[s
 	return s.Connector.GeminiRecommendationWithHistory(query, table, token, chatHistory)
 }
 
+
 func (s *AIService) SaveChatHistory(sessionID string, message model.Message) error {
 	return s.ChatRepo.SaveMessage(sessionID, message)
 }

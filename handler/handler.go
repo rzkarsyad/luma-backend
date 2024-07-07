@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"luma-backend/model"
 	"luma-backend/service"
@@ -24,9 +25,15 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	sessionID, err := c.Cookie("session_id")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session ID not found"})
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing"})
+		return
+	}
+
+	sessionID := strings.TrimPrefix(authHeader, "Bearer ")
+	if sessionID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session ID not found in Authorization header"})
 		return
 	}
 
@@ -36,7 +43,7 @@ func (h *AIHandler) HandleRequest(c *gin.Context) {
 			{Text: input.Query},
 		},
 	}
-	err = h.Service.SaveChatHistory(sessionID, userMessage)
+	err := h.Service.SaveChatHistory(sessionID, userMessage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving chat history"})
 		return
