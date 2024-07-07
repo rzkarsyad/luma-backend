@@ -91,6 +91,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt_token",
+		Value:    jwtToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(72 * time.Hour),
+	})
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Login successful",
 		"token":      jwtToken,
@@ -112,5 +122,15 @@ func generateJWT(user model.User) (string, error) {
 }
 
 func (h *OAuthHandler) Logout(c *gin.Context) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(-1 * time.Hour),
+	})
+
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
