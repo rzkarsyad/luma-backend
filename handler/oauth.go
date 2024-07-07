@@ -113,5 +113,4 @@ func generateJWT(user model.User) (string, error) {
 
 func (h *OAuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
-	c.Redirect(http.StatusFound, "http://localhost:3000/")
 }
