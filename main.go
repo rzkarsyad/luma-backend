@@ -70,6 +70,7 @@ func main() {
 	{
 		api.Use(middleware.AuthMiddleware())
 		api.POST("/chat", aiHandler.HandleRequest)
+		api.GET("/chat-history", aiHandler.GetChatHistory)
 	}
 
 	router.Run(":8080")
