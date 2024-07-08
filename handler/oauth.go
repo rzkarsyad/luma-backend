@@ -97,7 +97,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
@@ -107,7 +107,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
@@ -162,7 +162,7 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -171,7 +171,7 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
 
