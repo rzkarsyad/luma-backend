@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
@@ -56,7 +58,14 @@ func main() {
 
 	router := gin.Default()
 
-	router.Use(middleware.CORSMiddleware())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"https://luma.my.id", "https://www.luma.my.id", "https://api.luma.my.id", "https://luma.my.id/chat"},
+		AllowMethods:     []string{"POST", "OPTIONS", "GET", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Content-Type", "Content-Length", "Authorization", "jwt_token", "session_id"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	auth := router.Group("/auth")
 	{
