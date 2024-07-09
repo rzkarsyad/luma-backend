@@ -98,6 +98,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		Domain:   ".luma.my.id",
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
@@ -108,6 +109,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		Domain:   ".luma.my.id",
 		Expires:  time.Now().Add(72 * time.Hour),
 	})
 
@@ -163,6 +165,7 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		Domain:   ".luma.my.id",
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -172,6 +175,7 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		Domain:   ".luma.my.id",
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
 
